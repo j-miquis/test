@@ -1,0 +1,33 @@
+name: Crear publicación en LinkedIn
+on:
+   create:
+      branches:
+          - master
+          - main
+jobs:
+  api-request:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:latest
+    steps:
+    - name: Realizar petición a la API
+      run: |
+        # Define los parámetros para la petición
+        REPO_NAME=${{ github.event.repository.name }}
+        REPO_DESCRIPTION="Esta es la descripción de mi repositorio"
+        LINKEDIN_ID=${{ secrets.LINKEDIN_ID}}
+
+        # Define los encabezados y parámetros de autenticación requeridos por la API de LinkedIn
+        ACCESS_TOKEN=${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+        CONTENT_TYPE="Content-Type: application/json"
+        AUTHORIZATION="Authorization: Bearer ${ACCESS_TOKEN}"
+        UGC_ORIGIN="X-Restli-Protocol-Version: 2.0.0"
+        BODY="{\"author\":\"urn:li:person:$LINKEDIN_ID\",\"lifecycleState\":\"PUBLISHED\",\"specificContent\":{\"com.linkedin.ugc.ShareContent\":{\"shareCommentary\":{\"text\":\"Compartiendo contenido en LinkedIn\"},\"shareMediaCategory\":\"ARTICLE\",\"media\":[{\"status\":\"READY\",\"description\":{\"text\":\"${REPO_DESCRIPTION}\"},\"originalUrl\":\"https://github.com/jmiquis/${REPO_NAME}\",\"title\":{\"text\":\"${REPO_NAME}\"}}]}}}"
+        echo $REPO_NAME
+        # Realiza la petición utilizando curl
+        curl -X POST \
+          -H "${CONTENT_TYPE}" \
+          -H "${AUTHORIZATION}" \
+          -H "${UGC_ORIGIN}" \
+          -d "${BODY}" \
+          https://api.linkedin.com/v2/ugcPosts
